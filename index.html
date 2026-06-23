@@ -4,18 +4,136 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Extrator de Áudio</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-main: #37352f;
+            --text-muted: rgba(55, 53, 47, 0.6);
+            --border-color: rgba(55, 53, 47, 0.16);
+            --hover-bg: rgba(55, 53, 47, 0.08);
+            --primary-btn: #2eaadc;
+            --primary-btn-hover: #069cba;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1em;
+            margin-top: 0;
+            margin-bottom: 32px;
+        }
+
+        .upload-area {
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-bottom: 16px;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            background-color: var(--hover-bg);
+        }
+
+        .upload-content p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background-color: var(--hover-bg);
+            border-radius: 4px;
+            margin-bottom: 24px;
+            font-size: 0.9em;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 10px 16px;
+            background-color: var(--primary-btn);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-family: var(--font-family);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--primary-btn-hover);
+        }
+
+        .btn-primary:disabled {
+            background-color: var(--border-color);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .btn-text {
+            background: none;
+            border: none;
+            color: #e03e3e;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .btn-text:hover {
+            text-decoration: underline;
+        }
+
+        .status-message {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 0.9em;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
     <main class="container">
         <header>
             <h1>Extrair Áudio</h1>
-            <p>Faça o upload de um vídeo para separar a faixa de áudio.</p>
+            <p>Faça o upload de um vídeo para extrair o áudio no navegador.</p>
         </header>
 
         <section class="upload-area" id="drop-zone">
             <div class="upload-content">
-                <span class="icon">📁</span>
                 <p>Clique ou arraste um vídeo para cá</p>
                 <input type="file" id="video-input" accept="video/*" hidden>
             </div>
@@ -32,6 +150,150 @@
 
         <div class="status-message" id="status-message"></div>
     </main>
-    <script src="script.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('drop-zone');
+            const videoInput = document.getElementById('video-input');
+            const fileInfo = document.getElementById('file-info');
+            const fileNameDisplay = document.getElementById('file-name');
+            const removeFileBtn = document.getElementById('remove-file');
+            const convertBtn = document.getElementById('convert-btn');
+            const statusMessage = document.getElementById('status-message');
+
+            let currentFile = null;
+
+            dropZone.addEventListener('click', () => videoInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            videoInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+
+            removeFileBtn.addEventListener('click', () => {
+                currentFile = null;
+                videoInput.value = '';
+                fileInfo.style.display = 'none';
+                dropZone.style.display = 'block';
+                convertBtn.disabled = true;
+                statusMessage.textContent = '';
+            });
+
+            function handleFile(file) {
+                if (!file.type.startsWith('video/')) {
+                    alert('Por favor, selecione um arquivo de vídeo válido.');
+                    return;
+                }
+                currentFile = file;
+                fileNameDisplay.textContent = file.name;
+                dropZone.style.display = 'none';
+                fileInfo.style.display = 'flex';
+                convertBtn.disabled = false;
+            }
+
+            convertBtn.addEventListener('click', async () => {
+                convertBtn.disabled = true;
+                statusMessage.textContent = 'Processando o arquivo localmente... Aguarde.';
+
+                try {
+                    const arrayBuffer = await currentFile.arrayBuffer();
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    statusMessage.textContent = 'Decodificando as faixas de áudio...';
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    
+                    statusMessage.textContent = 'Convertendo e preparando o download...';
+                    const wavBlob = audioBufferToWav(audioBuffer);
+                    
+                    const downloadUrl = window.URL.createObjectURL(wavBlob);
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = downloadUrl;
+                    downloadLink.download = currentFile.name.split('.')[0] + '_audio.wav';
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    downloadLink.remove();
+
+                    statusMessage.textContent = 'Sucesso! O download foi iniciado.';
+                    setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 100);
+
+                } catch (error) {
+                    console.error(error);
+                    statusMessage.textContent = 'Erro ao processar. Tente um formato de vídeo suportado pelo navegador (MP4, WebM).';
+                } finally {
+                    convertBtn.disabled = false;
+                }
+            });
+
+            // Função para converter o buffer de áudio nativo em um arquivo WAV
+            function audioBufferToWav(buffer) {
+                let numOfChan = buffer.numberOfChannels,
+                    length = buffer.length * numOfChan * 2 + 44,
+                    bufferArray = new ArrayBuffer(length),
+                    view = new DataView(bufferArray),
+                    channels = [], i, sample,
+                    offset = 0,
+                    pos = 0;
+
+                setUint32(0x46464952);
+                setUint32(length - 8);
+                setUint32(0x45564157);
+
+                setUint32(0x20746d66);
+                setUint32(16);
+                setUint16(1);
+                setUint16(numOfChan);
+                setUint32(buffer.sampleRate);
+                setUint32(buffer.sampleRate * 2 * numOfChan);
+                setUint16(numOfChan * 2);
+                setUint16(16);
+
+                setUint32(0x61746164);
+                setUint32(length - pos - 4);
+
+                for (i = 0; i < buffer.numberOfChannels; i++)
+                    channels.push(buffer.getChannelData(i));
+
+                while (pos < buffer.length) {
+                    for (i = 0; i < numOfChan; i++) {
+                        sample = Math.max(-1, Math.min(1, channels[i][pos]));
+                        sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                        view.setInt16(offset, sample, true);
+                        offset += 2;
+                    }
+                    pos++;
+                }
+
+                return new Blob([bufferArray], { type: "audio/wav" });
+
+                function setUint16(data) {
+                    view.setUint16(offset, data, true);
+                    offset += 2;
+                }
+
+                function setUint32(data) {
+                    view.setUint32(offset, data, true);
+                    offset += 4;
+                }
+            }
+        });
+    </script>
 </body>
 </html>
