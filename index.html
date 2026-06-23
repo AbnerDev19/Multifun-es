@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extrator de Áudio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1>Extrair Áudio</h1>
+            <p>Faça o upload de um vídeo para separar a faixa de áudio.</p>
+        </header>
+
+        <section class="upload-area" id="drop-zone">
+            <div class="upload-content">
+                <span class="icon">📁</span>
+                <p>Clique ou arraste um vídeo para cá</p>
+                <input type="file" id="video-input" accept="video/*" hidden>
+            </div>
+        </section>
+
+        <div class="file-info" id="file-info" style="display: none;">
+            <span id="file-name">Nenhum arquivo selecionado</span>
+            <button id="remove-file" class="btn-text">Remover</button>
+        </div>
+
+        <button id="convert-btn" class="btn-primary" disabled>
+            Extrair Áudio
+        </button>
+
+        <div class="status-message" id="status-message"></div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
